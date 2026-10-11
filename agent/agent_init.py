@@ -17,7 +17,7 @@ import threading
 import time
 from collections import deque
 from contextlib import suppress
-from datetime import datetime
+from datetime import datetime, timezone, UTC
 from types import SimpleNamespace
 from typing import Any, Callable, Dict, List, Optional
 from urllib.parse import parse_qs, urlparse, urlunparse
@@ -1181,7 +1181,7 @@ def _publish_session_id(session_id: str) -> None:
 
 def _init_session_state(agent, session_id, session_db, parent_session_id, reasoning_config, max_tokens,
     checkpoints_enabled, checkpoint_max_snapshots, checkpoint_max_total_size_mb, checkpoint_max_file_size_mb):
-    agent.session_start = datetime.now()
+    agent.session_start = datetime.now(UTC)
     agent.session_id = session_id or new_session_id(agent.session_start)
     _publish_session_id(agent.session_id)
 

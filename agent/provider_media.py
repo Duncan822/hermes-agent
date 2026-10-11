@@ -37,7 +37,7 @@ def cache_dir(kind: str) -> Path:
 
 
 def cache_path(kind: str, prefix: str, extension: str) -> Path:
-    ts = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+    ts = datetime.datetime.now(datetime.UTC).strftime("%Y%m%d_%H%M%S")
     short = uuid.uuid4().hex[:8]
     return cache_dir(kind) / f"{prefix}_{ts}_{short}.{extension}"
 

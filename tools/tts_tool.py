@@ -348,7 +348,7 @@ def _resolve_output_base(
             ext = _get_command_tts_output_format(command_provider_config)
         else:
             ext = "ogg" if want_opus and provider in _NATIVE_OPUS_PROVIDERS else "mp3"
-        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+        timestamp = datetime.datetime.now(datetime.UTC).strftime("%Y%m%d_%H%M%S_%f")
         file_path = Path(_default_output_dir()) / f"tts_{timestamp}.{ext}"
     file_path.parent.mkdir(parents=True, exist_ok=True)
     return file_path, None

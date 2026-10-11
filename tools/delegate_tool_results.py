@@ -174,7 +174,7 @@ def _spill_summary_to_file(task_index: int, summary: str) -> Optional[str]:
         import datetime as _dt
         cache_dir = get_hermes_dir("cache/delegation", "delegation_cache")
         cache_dir.mkdir(parents=True, exist_ok=True)
-        path = cache_dir / f"subagent-summary-{task_index}-{_dt.datetime.now().strftime('%Y%m%d_%H%M%S_%f')}.txt"
+        path = cache_dir / f"subagent-summary-{task_index}-{_dt.datetime.now(_dt.UTC).strftime('%Y%m%d_%H%M%S_%f')}.txt"
         from tools.spill_safety import write_text_exclusive
         # Exclusive symlink-refusing create; not private because cache/delegation is bind-mounted read-only into
         # remote backends whose container UID must be able to read it.

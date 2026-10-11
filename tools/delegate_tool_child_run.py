@@ -182,7 +182,7 @@ def _dump_subagent_timeout_diagnostic(
             return None
 
         subagent_id = getattr(child, "_subagent_id", None) or f"idx{task_index}"
-        dump_path = logs_dir / f"subagent-timeout-{subagent_id}-{_dt.datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
+        dump_path = logs_dir / f"subagent-timeout-{subagent_id}-{_dt.datetime.now(_dt.UTC).strftime('%Y%m%d_%H%M%S')}.log"
         _goal_preview = elide((goal or "").strip(), 1000)
         def _attr_line(attr):
             try:
@@ -192,7 +192,7 @@ def _dump_subagent_timeout_diagnostic(
 
         tool_names = getattr(child, "valid_tool_names", None)
         lines: list[str] = [
-            "# Subagent timeout diagnostic — issue #14726", f"# Generated: {_dt.datetime.now().isoformat()}", "",
+            "# Subagent timeout diagnostic — issue #14726", f"# Generated: {_dt.datetime.now(_dt.UTC).isoformat()}", "",
             "## Timeout", f"  task_index:        {task_index}", f"  subagent_id:       {subagent_id}",
             f"  configured_timeout: {timeout_seconds}s", f"  actual_duration:   {duration_seconds:.2f}s", "", "## Goal",
             _goal_preview or "(empty)", "", "## Child config", *map(_attr_line, _DIAG_CHILD_ATTRS),
