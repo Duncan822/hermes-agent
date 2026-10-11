@@ -17,7 +17,7 @@ import threading
 import time
 from collections import deque
 from contextlib import suppress
-from datetime import datetime, timezone, UTC
+from datetime import datetime, UTC
 from types import SimpleNamespace
 from typing import Any, Callable, Dict, List, Optional
 from urllib.parse import parse_qs, urlparse, urlunparse
