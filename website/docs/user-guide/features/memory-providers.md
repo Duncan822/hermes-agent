@@ -331,6 +331,18 @@ live in `ovcli.conf` (`OPENVIKING_CLI_CONFIG_FILE` or
 `OPENVIKING_ACCOUNT` and `OPENVIKING_USER` are used for local/trusted mode.
 `OPENVIKING_AGENT` is Hermes' peer ID in OpenViking for peer-scoped memories.
 
+The provider Hermes loads is the bundled copy in `plugins/memory/openviking/`.
+A same-named plugin under `$HERMES_HOME/plugins/openviking/` is not imported
+while that bundled directory exists, so `hermes memory status` can say
+`openviking` while a catalog Quick Local install is idle. Check the loaded
+module path before relying on Quick Local commands. Extraction LLM calls are
+made by `openviking-server` from its own `ov.conf`, not by the Hermes
+provider process. `~/.openviking/ov.conf` and `ovcli.conf` are shared by every
+profile of that user account. Only one external `memory.provider` is active
+per profile; built-in `MEMORY.md` / `USER.md` stay on either way. The server
+keeps running after Hermes exits, and removing the plugin does not delete
+server data.
+
 ---
 
 ### Mem0

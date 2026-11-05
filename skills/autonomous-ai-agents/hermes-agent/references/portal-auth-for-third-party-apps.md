@@ -16,15 +16,16 @@ trips agents up.
 
 | Surface | What it actually is | Auth path |
 |---|---|---|
-| **OpenViking memory plugin** (`plugins/memory/openviking/`) | Code that runs **inside the Hermes process**. Its LLM calls go through Hermes's already-configured provider. | Already uses Portal if user's Hermes is configured for Portal. Nothing extra needed. `OPENVIKING_API_KEY` is the OpenViking *server's* own auth, not LLM auth. |
-| **OpenViking the standalone server** (separate container) | A separate context-DB service. If it ever calls an LLM on its own, that's a separate HTTP client. | Same as any external app — Layer 2/3 below. |
+| **Bundled OpenViking provider** (`plugins/memory/openviking/`) | Hermes-side HTTP client for an already running OpenViking server. This module does not call a chat model. Extraction runs in `openviking-server`, using that server's own `ov.conf` VLM block. | `OPENVIKING_API_KEY` authenticates Hermes to the OpenViking API. It is not an LLM key. A Portal login is not forwarded to the server. Put a static inference key in `ov.conf` when the server itself must call a model, or point `vlm.api_base` at a local broker (see subscription proxy docs). |
+| **Catalog Quick Local plugin** (Volcengine `examples/hermes-plugin`, installed under `$HERMES_HOME/plugins/openviking/`) | Separate per-profile `openviking-server`. Setup copies a **static** Hermes API key into `$HERMES_HOME/openviking` and that child process calls the model. OAuth and refreshed credentials are refused. | While `plugins/memory/openviking/` exists, `plugins/memory/__init__.py` loads the bundled provider and skips a user plugin of the same name. A Portal browser login cannot be the Quick Local extraction credential. Use a static API key, or a Custom server you configure yourself. |
+| **OpenViking the standalone server** (separate container) | A separate context-DB service. Its VLM calls are that process's own HTTP client. | Same as any external app — Layer 2/3 below. |
 | **Karakeep, n8n, LibreChat, OpenWebUI, any self-hosted app** | Different process, often different machine. Makes its own HTTPS calls to `inference-api.nousresearch.com`. | Layer 2/3 below. |
 
-**Pitfall to avoid**: do not pitch "OAuth into Portal" as the solution for a
-plugin that already runs inside Hermes. That LLM call is already authenticated
-via Hermes's provider config. The plugin's own server auth (e.g.
-`OPENVIKING_API_KEY` for talking to the OpenViking REST API) is unrelated to
-Portal.
+**Pitfall to avoid**: memory extraction is not an in-process Hermes LLM call.
+Do not tell a user that OpenViking "already uses Portal" because the provider
+plugin is loaded inside Hermes. The server that extracts memories needs its
+own static credential or a local broker. `OPENVIKING_API_KEY` only
+authenticates the Hermes client to that server.
 
 ---
 

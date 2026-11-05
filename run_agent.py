@@ -409,6 +409,12 @@ class _StreamErrorEvent(Exception):
         }
 
 
+# Bound for the pre-on_session_end drain in shutdown_memory_provider.
+# Matches the CLI and gateway flush budget. shutdown_all's own drain
+# stays shorter and still runs afterwards; it is too late to commit.
+_MEMORY_SHUTDOWN_FLUSH_TIMEOUT_S = 10.0
+
+
 class AIAgent:
     """
     AI Agent with tool calling capabilities.
@@ -4021,14 +4027,41 @@ class AIAgent:
         )
 
     def shutdown_memory_provider(self, messages: list = None) -> None:
-        """Shut down the memory provider and context engine — call at actual session boundaries.
+        """Shut down memory and the context engine once, at a real session boundary.
 
-        This calls on_session_end() then shutdown_all() on the memory
-        manager, and on_session_end() on the context engine.
-        NOT called per-turn — only at CLI exit, /reset, gateway
-        session expiry, etc.
+        Not called per turn. One-shot, CLI cleanup, and gateway cleanup all
+        enter here, and a later ``close()`` may enter again.
+
+        Per-turn ``sync_all`` only queues work. ``on_session_end`` is where
+        providers such as OpenViking decide to commit, and they only see a
+        turn after that queued upload has been registered. Drain the worker
+        first. ``shutdown_all`` drains it only after that decision, and
+        one-shot then ``os._exit`` skips atexit.
+
+        This tree has no ``MemoryManager.claim_teardown``. The flag below is
+        the once-only guard: do not skip the hook when a manager is present.
+        A drain timeout or error is logged and teardown still continues.
         """
+        if getattr(self, "_memory_provider_shutdown", False):
+            return
+        self._memory_provider_shutdown = True
         if self._memory_manager:
+            flush = getattr(self._memory_manager, "flush_pending", None)
+            if callable(flush):
+                try:
+                    flushed = flush(timeout=_MEMORY_SHUTDOWN_FLUSH_TIMEOUT_S)
+                except Exception as e:
+                    logger.warning(
+                        "Memory sync drain failed before session end: %s",
+                        e,
+                        exc_info=True,
+                    )
+                else:
+                    if flushed is False:
+                        logger.warning(
+                            "Memory sync drain timed out after %.1fs before session end; continuing shutdown",
+                            _MEMORY_SHUTDOWN_FLUSH_TIMEOUT_S,
+                        )
             try:
                 self._memory_manager.on_session_end(messages or [])
             except Exception as e:
