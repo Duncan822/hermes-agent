@@ -111,6 +111,31 @@ native memory entries do not yet carry stable OpenViking file URIs. Use
 `viking_forget` when the user explicitly asks to delete a specific OpenViking
 memory URI.
 
+## Which OpenViking code Hermes loads
+
+This directory is the bundled provider (plugin version in `plugin.yaml`).
+`plugins/memory/__init__.py` scans bundled providers first and skips a
+user-installed directory with the same name. A catalog copy at
+`$HERMES_HOME/plugins/openviking/` (Volcengine Quick Local, `hermes openviking
+local …`) is not the module `hermes memory setup openviking` or
+`memory.provider: openviking` imports while this directory exists.
+
+Confirm the module Hermes will import before trusting a Quick Local install.
+Run this with the profile's `HERMES_HOME` and the Hermes environment on
+`PYTHONPATH`:
+
+```bash
+python -c 'from plugins.memory import find_provider_dir; print(find_provider_dir("openviking"))'
+```
+
+`hermes memory status` reporting `openviking` only means some provider by that
+name loaded. Read the printed directory and its `plugin.yaml` `version`.
+
+This bundled client does not call a chat model. Extraction is performed by
+`openviking-server` with the VLM block in its own `ov.conf`. Server files
+under `~/.openviking/` are per user account, not per Hermes profile. Profile
+`.env` values (`OPENVIKING_ENDPOINT`, `OPENVIKING_API_KEY`) are profile-scoped.
+
 `viking_forget` is intentionally narrow. It only accepts concrete user memory
 file URIs, such as
 `viking://user/peers/hermes/memories/preferences/mem_abc123.md` or the canonical
